@@ -1,0 +1,83 @@
+[project]
+name = "mini-rag-chatbot"
+version = "0.1.0"
+description = "FastAPI WebSocket RAG chatbot with RBAC enforced at the Qdrant query layer"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.142.2",
+    "uvicorn[standard]==0.54.0",
+    "pydantic==2.13.5",
+    "pydantic-settings==2.15.0",
+    "pyjwt==2.15.1",
+    "python-dotenv==1.2.4",
+    "openai==3.24.0",
+    "qdrant-client==1.19.1",
+    "sentence-transformers==6.1.0",
+    "pypdfium2==5.13.0",
+    "rapidocr==3.9.2",
+    "onnxruntime==1.30.0",
+    "transformers==5.18.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=6.0",
+    "httpx==0.28.1",
+    "ruff>=0.12",
+    "mypy>=1.17",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["mint_tokens.py"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP", "B", "ASYNC", "SIM", "C90"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-m 'not qdrant and not live_llm and not model'"
+markers = [
+    "model: tests requiring the local SentenceTransformer model weights (~130 MB)",
+    "qdrant: integration tests requiring a Qdrant server at localhost:6333",
+    "live_llm: end-to-end tests requiring a live LLM provider key",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+omit = ["app/main.py"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+]
+
+[[tool.mypy.overrides]]
+# pypdfium2 ships no type information (no py.typed); D-83: override only what mypy reports.
+module = ["pypdfium2", "pypdfium2.*"]
+ignore_missing_imports = true
